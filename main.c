@@ -2,7 +2,7 @@
 #include<stdlib.h>
 #include<time.h>
 #define ANSI_BACKGROUND_WHITE     "\033[107m"
-#define ANSI_COLOR_BLACK     "\x1b[30m"
+#define ANSI_COLOR_BLACK   "\x1b[30m"
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
@@ -10,7 +10,6 @@
 #define ANSI_COLOR_MAGENTA "\x1b[35m"
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
-
 
 enum Suit {
     SPADES,
@@ -115,9 +114,8 @@ DeckTP buildDeck(int numberOfDecks) {
 returns success/fail*/
 int printCardList(struct CardList* cardList) {
     CardTP current;
-    int i;
-    printf("Start of print");
-    for(current = cardList->head, i = 0; current != NULL; current = current->next){
+    printf("Start of print\n");
+    for(current = cardList->head; current != NULL; current = current->next){
         printf(ANSI_BACKGROUND_WHITE ANSI_COLOR_BLACK);
         if(current-> value < 11){
             printf("%d of ", current->value);
@@ -157,23 +155,22 @@ int printCardList(struct CardList* cardList) {
     return 1;
 }
 
-
-
-/*/Take a pointer to a player, the deck, and the number of cards to draw
-//If the player has no cards, make the deck's head the player's hand's
-//head, then step in the number of cards to draw, make that pointer null
-//Then set the next card as the deck's new head. If the player has cards
-//in their hand (the head pointer is not null), then the final card drawn
-//will point to the head. Actually this could work in both since the head
-//would be null if there are no cards. If there are not enough cards in the
-//deck then return an error value.*/
+/*Splits the deck along where we want to draw and assigns the first bit to the hand
+and the second bit to the deck*/
 int draw(HandTP hand, DeckTP deck, int numberToDraw) {
     CardTP temp;
-    CardT test = {NULL, 2, 0};
+    CardTP temp2;
     int i;
-
+    int j;
+    if(numberToDraw <= 0){
+        printf("Attempting to draw less than one card");
+        return 0;
+    }
     for(i = 0, temp = deck->head; i < numberToDraw; i++, temp = temp->next){
-
+        if(temp->next == NULL){
+            printf("Attempted to draw too many cards");
+            return 0;
+        }
     }
     /*if the player has no cards in hand*/
     if(hand->head == NULL)
@@ -183,11 +180,47 @@ int draw(HandTP hand, DeckTP deck, int numberToDraw) {
         for(i = 0, temp = hand->head; i < numberToDraw - 1; i++, temp = temp->next){
 
         }
-        printf("Here is the temp's Number: %d and Suit: %d and the next nodes value: %d", temp->value, temp->suit, temp->next->value );
+        temp->next = NULL;
+    }else{
+        for(j = 0, temp2 = hand->head; temp2->next !=NULL; j++, temp2 = temp2->next){
+
+        }
+        temp2->next = deck->head;
+        deck->head = temp;
+        for(i = 0, temp = hand->head; i < numberToDraw + j; i++, temp = temp->next){
+
+        }
         temp->next = NULL;
     }
-    return 0;
+    return 1;
 }
+
+GameTableTP initGame(GameTableTP GameTable, int numberOfPlayers){
+    int i;
+    PlayerTP temp;
+    PlayerTP temp2;
+
+    GameTable->deck = buildDeck(numberOfPlayers);
+    GameTable->firstPlayer = malloc(sizeof(PlayerT));
+    temp = malloc(sizeof(PlayerT));
+    GameTable->firstPlayer = temp;
+
+    for(i = 0; i < numberOfPlayers; i++){
+        temp2 = malloc(sizeof(CardT));
+        temp->nextPlayer = temp2;
+        temp->hand = (HandTP)malloc(sizeof(HandT));
+        draw(temp->hand, GameTable->deck, 13);
+        temp = temp->nextPlayer;
+    }
+    return GameTable;
+}
+
+int gameLoop(GameTableT GameTable){
+
+    
+
+}
+
 /*
 //literally just add the whole discard pile to the player's hand.
 //then take the head node and form a set with two matching cards
@@ -199,20 +232,14 @@ int pickUpStack(PlayerTP player, DiscardPileTP discardPile) {
 int main(void) {
     int numberOfPlayers;
     GameTableT GameTable;
-    PlayerT player1;
-
-    player1.hand = (HandTP)malloc(sizeof(HandT));
 
     /*/ask user for number of players*/
 
-    numberOfPlayers = 1;
-    GameTable.deck = buildDeck(numberOfPlayers);
+    numberOfPlayers = 2;
+    initGame(&GameTable, numberOfPlayers);
+    gameLoop(GameTable);
     printCardList(GameTable.deck);
-
-    draw(player1.hand, GameTable.deck, 5);
-
-    printCardList(GameTable.deck);
-    printCardList(player1.hand);
-
+    printCardList(GameTable.firstPlayer->hand);
+    printCardList(GameTable.firstPlayer->nextPlayer->hand);
     return 0;
 }

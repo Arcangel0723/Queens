@@ -9,7 +9,9 @@
 #define ANSI_COLOR_BLUE    "\x1b[34m"
 #define ANSI_COLOR_MAGENTA "\x1b[35m"
 #define ANSI_COLOR_CYAN    "\x1b[36m"
+#define ANSI_COLOR_WHITE    "\x1b[37m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
+#define clearScreen() printf("\033c")
 
 enum Suit {
     SPADES,
@@ -41,6 +43,8 @@ typedef struct Field {
 } FieldT, *FieldTP;
 
 typedef struct Player {
+    int score;
+    int playerNumber;
     HandTP hand;
     FieldTP field;
     struct Player* nextPlayer;
@@ -62,7 +66,6 @@ int shuffleDeck(DeckTP deck){
     /*find length of linked list*/
     for(current = deck->head, numberOfCards = 0; current->next != NULL; current = current->next, numberOfCards++)
         ;
-    printf("The number of cards is: %d\n", numberOfCards);
     cardArray = (CardTP*)malloc(sizeof(CardTP) * numberOfCards);
 
     for(current = deck->head, i = 0; current->next != NULL; current = current->next, i++){
@@ -92,14 +95,13 @@ DeckTP buildDeck(int numberOfDecks) {
     int i;
     int j;
 
-    deck = malloc(sizeof(DeckT));
-    deck->head = malloc(sizeof(CardT));
-    temp = malloc(sizeof(CardT));
+    deck = (DeckTP)malloc(sizeof(DeckT));
+    temp = (CardTP)malloc(sizeof(CardT));
     deck->head = temp;
 
     for(i = 0; i < 13 * numberOfDecks; i++){
         for(j = 0; j < 4; j++){
-            temp2 = malloc(sizeof(CardT));
+            temp2 = (CardTP)malloc(sizeof(CardT));
             temp->next = temp2;
             temp->value = i%13 + 1;
             temp->suit = j;
@@ -116,7 +118,7 @@ int printCardList(struct CardList* cardList) {
     CardTP current;
     printf("Start of print\n");
     for(current = cardList->head; current != NULL; current = current->next){
-        printf(ANSI_BACKGROUND_WHITE ANSI_COLOR_BLACK);
+        printf(ANSI_COLOR_WHITE);
         if(current-> value < 11){
             printf("%d of ", current->value);
         }else{
@@ -138,7 +140,7 @@ int printCardList(struct CardList* cardList) {
 
         switch(current->suit){
             case SPADES:
-                printf(ANSI_COLOR_BLACK "♠\n" ANSI_COLOR_RESET);
+                printf(ANSI_COLOR_WHITE "♠\n" ANSI_COLOR_RESET);
                 break;
             case HEARTS:
                 printf(ANSI_COLOR_RED "♥\n" ANSI_COLOR_RESET);
@@ -195,30 +197,89 @@ int draw(HandTP hand, DeckTP deck, int numberToDraw) {
     return 1;
 }
 
-GameTableTP initGame(GameTableTP GameTable, int numberOfPlayers){
+int getInt(){
+    int validInput;
+    int userInput;
+    int c;
+    char inputBuffer[16];
+    
+    validInput = 0;
+    while(!validInput){
+        fgets(inputBuffer, sizeof(inputBuffer), stdin);
+        if(sscanf(inputBuffer, "%d", &userInput) == 1){
+            validInput = 1;
+        }else{
+            while ((c = getchar()) != '\n' && c != EOF);
+            printf("\33[1A");
+            printf("\33[2K");
+        }
+    }
+    return userInput;
+}
+
+void initGame(GameTableTP GameTable){
     int i;
+    int numberOfPlayers;
     PlayerTP temp;
     PlayerTP temp2;
 
+    printf("Welcome to Queens\nTo begin, please enter the number of players (greater than one): \n");
+    
+    numberOfPlayers = 0;
+    while(numberOfPlayers <= 1){
+        numberOfPlayers = getInt();
+        if(numberOfPlayers <= 1){
+            printf("\33[1A");
+            printf("\33[2K");
+        }
+    }
+
     GameTable->deck = buildDeck(numberOfPlayers);
-    GameTable->firstPlayer = malloc(sizeof(PlayerT));
-    temp = malloc(sizeof(PlayerT));
+    temp = (PlayerTP)malloc(sizeof(PlayerT));
+    temp->hand = (HandTP)malloc(sizeof(HandT));
+    draw(temp->hand, GameTable->deck, 13);
+    temp->playerNumber = 1;
     GameTable->firstPlayer = temp;
 
-    for(i = 0; i < numberOfPlayers; i++){
-        temp2 = malloc(sizeof(CardT));
+    for(i = 0; i < numberOfPlayers - 1; i++){
+        temp2 = (PlayerTP)malloc(sizeof(PlayerT));
         temp->nextPlayer = temp2;
-        temp->hand = (HandTP)malloc(sizeof(HandT));
-        draw(temp->hand, GameTable->deck, 13);
+        temp2->hand = (HandTP)malloc(sizeof(HandT));
+        draw(temp2->hand, GameTable->deck, 13);
+        temp2->playerNumber = i + 2;
         temp = temp->nextPlayer;
     }
-    return GameTable;
+    temp->nextPlayer = GameTable->firstPlayer;
+    clearScreen();
+}
+/*returns a */
+int playerTurn(PlayerTP player){
+    int hasCards;
+    int playerInput;
+
+    playerInput = 0;
+    printf("Welcome Player %d\nType 1 to begin your turn\n", player->playerNumber);
+
+    while(playerInput != 1){
+        playerInput = getInt();
+        printf("\33[1A");
+        printf("\33[2K");
+    }
+
+    clearScreen();
+    return hasCards;
 }
 
 int gameLoop(GameTableT GameTable){
+    int roundInProgress;
+    PlayerTP player;
 
-    
-
+    player = GameTable.firstPlayer;
+    while(roundInProgress){
+        roundInProgress = playerTurn(player);
+        player = player->nextPlayer;
+    }
+    return 0;
 }
 
 /*
@@ -230,16 +291,10 @@ int pickUpStack(PlayerTP player, DiscardPileTP discardPile) {
 }*/
 
 int main(void) {
-    int numberOfPlayers;
     GameTableT GameTable;
 
-    /*/ask user for number of players*/
-
-    numberOfPlayers = 2;
-    initGame(&GameTable, numberOfPlayers);
+    initGame(&GameTable);
     gameLoop(GameTable);
-    printCardList(GameTable.deck);
-    printCardList(GameTable.firstPlayer->hand);
-    printCardList(GameTable.firstPlayer->nextPlayer->hand);
+
     return 0;
 }

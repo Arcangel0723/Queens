@@ -63,9 +63,10 @@ DeckTP buildDeck(int numberOfDecks) {
 
 int printCardList(struct CardList* cardList) {
     CardTP current;
-    printf("Start of print\n");
-    for(current = cardList->head; current != NULL; current = current->next){
+    int i;
+    for(current = cardList->head, i = 0; current != NULL; current = current->next, i++){
         printf(ANSI_COLOR_WHITE);
+        printf("%d: ", i + 1);
         if(current-> value < 11){
             printf("%d of ", current->value);
         }else{
@@ -103,6 +104,18 @@ int printCardList(struct CardList* cardList) {
 
     return 1;
 }
+
+CardTP findCardAtPosition(struct CardList* CardList, int index){
+    int i;
+    CardTP current;
+
+    for(i = 0, current = CardList->head; i < index && current != NULL; i++, current = current->next){
+
+    }
+
+    return current;
+}
+
 int draw(HandTP hand, DeckTP deck, int numberToDraw) {
     CardTP temp;
     CardTP temp2;

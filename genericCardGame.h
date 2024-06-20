@@ -19,3 +19,4 @@ int shuffleDeck(DeckTP deck);
 DeckTP buildDeck(int numberOfDecks);
 int printCardList(struct CardList* cardList);
 int draw(HandTP hand, DeckTP deck, int numberToDraw);
+CardTP findCardAtPosition(struct CardList* CardList, int index);

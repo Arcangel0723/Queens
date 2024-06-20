@@ -12,6 +12,7 @@ typedef struct Set {
 
 typedef struct Field {
     SetTP head;
+    int numSets;
 } FieldT, *FieldTP;
 
 typedef struct Player {
@@ -68,6 +69,7 @@ void initGame(GameTableTP GameTable){
     GameTable->deck = buildDeck(numberOfPlayers);
     temp = (PlayerTP)malloc(sizeof(PlayerT));
     temp->hand = (HandTP)malloc(sizeof(HandT));
+    temp->field = (FieldTP)malloc(sizeof(FieldT));
     draw(temp->hand, GameTable->deck, 13);
     temp->playerNumber = 1;
     GameTable->firstPlayer = temp;
@@ -76,6 +78,7 @@ void initGame(GameTableTP GameTable){
         temp2 = (PlayerTP)malloc(sizeof(PlayerT));
         temp->nextPlayer = temp2;
         temp2->hand = (HandTP)malloc(sizeof(HandT));
+        temp2->field = (FieldTP)malloc(sizeof(FieldT));
         draw(temp2->hand, GameTable->deck, 13);
         temp2->playerNumber = i + 2;
         temp = temp->nextPlayer;
@@ -83,10 +86,26 @@ void initGame(GameTableTP GameTable){
     temp->nextPlayer = GameTable->firstPlayer;
     clearScreen();
 }
+
+void resetPlayerBoard(PlayerTP player){
+    int i;
+    clearScreen();
+    printf("Enter '0' to end your turn\n");
+    printCardList(player->hand);
+    
+    for(i = 0; i < player->field->numSets; i++){
+        printf("Set of %d\n", player->field->head->value);
+    }
+}
+
 /*returns a */
 int playerTurn(PlayerTP player){
     int hasCards;
     int playerInput;
+    CardTP temp;
+    CardTP cardBuffer[3];
+    SetTP set;
+    int i;
 
     playerInput = 0;
     printf("Welcome Player %d\nType 1 to begin your turn\n", player->playerNumber);
@@ -95,6 +114,43 @@ int playerTurn(PlayerTP player){
         playerInput = getInt();
         printf("\33[1A");
         printf("\33[2K");
+    }
+    clearScreen();
+
+    printf("Enter '0' to end your turn\n");
+    printCardList(player->hand);
+
+    while(playerInput != 0){
+        /*if player has no natural set yet*/
+        if(player->field->head == NULL){
+            for(i = 0; i < 3; i++){
+                do
+                {
+                    printf("Type a card number to add to your set: ");
+                    playerInput = getInt();
+                    if(playerInput == 0){
+                        break;
+                    }
+                } while ((temp = findCardAtPosition(player->hand, playerInput - 1)) == NULL);
+                cardBuffer[i] = temp;
+                printf("Inputed Card: %d\n", temp->value);
+                if(playerInput == 0){
+                    break;
+                }
+            }
+            if(playerInput != 0){
+                if(cardBuffer[0]->value == cardBuffer[1]->value && cardBuffer[1]->value == cardBuffer[2]->value){
+                    resetPlayerBoard(player);
+                    printf("Valid Set\n");
+                }else{
+                    resetPlayerBoard(player);
+                    printf("Invalid set, please choose different cards\n");
+                }
+            }
+            
+        }else{
+
+        }
     }
 
     clearScreen();

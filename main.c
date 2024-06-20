@@ -102,6 +102,7 @@ void resetPlayerBoard(PlayerTP player){
 int playerTurn(PlayerTP player){
     int hasCards;
     int playerInput;
+    int inputBuffer[3];
     CardTP temp;
     CardTP cardBuffer[3];
     SetTP set;
@@ -133,6 +134,8 @@ int playerTurn(PlayerTP player){
                     }
                 } while ((temp = findCardAtPosition(player->hand, playerInput - 1)) == NULL);
                 cardBuffer[i] = temp;
+                printf("Your input: %d\n", playerInput);
+                inputBuffer[i] = playerInput;
                 printf("Inputed Card: %d\n", temp->value);
                 if(playerInput == 0){
                     break;
@@ -140,7 +143,29 @@ int playerTurn(PlayerTP player){
             }
             if(playerInput != 0){
                 if(cardBuffer[0]->value == cardBuffer[1]->value && cardBuffer[1]->value == cardBuffer[2]->value){
+                    set = (SetTP)malloc(sizeof(SetTP));
+                    player->field->head = set;
+                    set->head = cardBuffer[0];
+                    for(i = 0; i < 3; i++){
+                        printf("CardBuffer[i]->value == %d", cardBuffer[i]->value);
+                        /*if the player selected the first card*/
+                        if(inputBuffer[i] == 1){
+                            player->hand->head = cardBuffer[i]->next;
+                        }else{
+                            temp = findCardAtPosition(player->hand, inputBuffer[i] - 2);
+                            temp->next = cardBuffer[i]->next;
+                        }
+                        if(i < 2){
+                            cardBuffer[i]->next = cardBuffer[i + 1];
+                        }else{
+                            cardBuffer[i]->next = NULL;
+                        }
+                    }
                     resetPlayerBoard(player);
+                    printf("Set:\n");
+                    for(temp = set->head; temp != NULL; temp = temp->next){
+                        printf("%d of %d\n", temp->value, temp->suit);
+                    }
                     printf("Valid Set\n");
                 }else{
                     resetPlayerBoard(player);
@@ -149,9 +174,12 @@ int playerTurn(PlayerTP player){
             }
             
         }else{
-
+            hasCards = getInt();
+            playerInput = hasCards;
         }
     }
+
+    printf("Please choose a card to discard: ");
 
     clearScreen();
     return hasCards;
